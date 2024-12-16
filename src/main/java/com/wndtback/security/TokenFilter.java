@@ -25,33 +25,34 @@ public class TokenFilter extends OncePerRequestFilter {
         this.jwtCore = jwtCore;
         this.userDetailsService = userDetailsService;
     }
+    // TokenFilter class
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws ServletException, IOException {
         String jwt = null;
         String username = null;
         UserDetails userDetails = null;
         UsernamePasswordAuthenticationToken auth = null;
-        try{
+        try {
             String headerAuth = request.getHeader("Authorization");
-            if(headerAuth != null && headerAuth.startsWith("Bearer ")){
+            if (headerAuth != null && headerAuth.startsWith("Bearer ")) {
                 jwt = headerAuth.substring(7);
             }
-            if(jwt != null){
-                try{
+            if (jwt != null) {
+                try {
                     username = jwtCore.getUserNameFromJwt(jwt);
-
-                } catch (ExpiredJwtException e){
-
+                } catch (ExpiredJwtException e) {
+                    // Handle expired token
                 }
-                if(username != null && SecurityContextHolder.getContext().getAuthentication() == null){
+                if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     userDetails = userDetailsService.loadUserByUsername(username);
                     auth = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             }
-        } catch (Exception e){
-
+        } catch (Exception e) {
+            // Handle any exception
         }
         chain.doFilter(request, response);
     }
+
 }

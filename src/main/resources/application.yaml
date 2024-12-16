@@ -3,7 +3,7 @@ spring:
     name: WindtBack
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5433/security_back_winderton
+    url: jdbc:postgresql://localhost:5433/spring_authorization
     username: postgres
     password: postgres
   jpa:
@@ -11,10 +11,11 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: update
 server:
   port: 8081
 wndtback:
   app:
     secret: 3yYVzp5nVElAYg123uRpOMq+fzQfFQ6OgoxTKuUz9Fg=
     lifetime: 60000
+    refreshLifetime: 100000

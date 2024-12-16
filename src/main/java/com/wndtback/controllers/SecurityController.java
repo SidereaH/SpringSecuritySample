@@ -1,11 +1,12 @@
 package com.wndtback.controllers;
 
-import com.wndtback.models.SigninRequest;
-import com.wndtback.models.SignupRequest;
+import com.wndtback.dto.AuthResponse;
+import com.wndtback.dto.SigninRequest;
+import com.wndtback.dto.SignupRequest;
+import com.wndtback.dto.UserDTO;
 import com.wndtback.models.User;
 import com.wndtback.repositories.UserRepository;
 import com.wndtback.security.JwtCore;
-import com.wndtback.security.SecurityConfig;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,8 +17,9 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
+import org.springframework.http.ResponseEntity;
 @RestController
+@CrossOrigin("http://localhost:3000")
 @RequestMapping("/auth")
 public class SecurityController {
 
@@ -57,8 +59,10 @@ public class SecurityController {
         user.setUsername(signupRequest.getUsername());
         user.setEmail(signupRequest.getEmail());
         user.setPassword(passwordEncoder.encode(signupRequest.getPassword()));
+        user.setRole(signupRequest.getRole());
         userRepository.save(user);
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+
+        return new ResponseEntity<> (new UserDTO(user), HttpStatus.CREATED);
     }
 
     @PostMapping("/signin")
@@ -71,6 +75,21 @@ public class SecurityController {
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
         String jwt = jwtCore.generateToken(authentication);
-        return ResponseEntity.status(HttpStatus.OK).body(jwt);
+        String refreshToken = jwtCore.generateRefreshToken(authentication);
+
+        return new ResponseEntity<> (new AuthResponse(jwt, refreshToken), HttpStatus.OK);
     }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<?> refreshAccessToken(@RequestParam String refreshToken, Authentication authentication) {
+        if (authentication == null) {
+            return new ResponseEntity<>("Authentication is missing", HttpStatus.UNAUTHORIZED);
+        }
+
+        if (jwtCore.isRefreshTokenExpired(refreshToken)) {
+            return new ResponseEntity<>(jwtCore.generateToken(authentication), HttpStatus.OK);
+        }
+        return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
+    }
+
 }
